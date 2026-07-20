@@ -9,7 +9,7 @@ You will implement the functions in recommender.py:
 - recommend_songs
 """
 
-from recommender import load_songs, recommend_songs, score_song_alt
+from recommender import load_songs, recommend_songs, score_song_no_mood
 
 
 def print_recommendations(profile_name: str, user_prefs: dict, songs: list) -> None:
@@ -31,54 +31,38 @@ def print_recommendations(profile_name: str, user_prefs: dict, songs: list) -> N
         print()
 
 
-def print_weight_comparison(profile_name: str, user_prefs: dict, songs: list) -> None:
-    """Compare recommendations using different weight configurations."""
+def print_feature_removal_experiment(profile_name: str, user_prefs: dict, songs: list) -> None:
+    """Compare recommendations WITH and WITHOUT mood matching."""
     print(f"\n{'='*70}")
-    print(f"WEIGHT COMPARISON: {profile_name}")
+    print(f"EXPERIMENT: Feature Removal (No Mood) - {profile_name}")
     print(f"{'='*70}\n")
 
-    # Current weights
-    current_weights = {
-        'genre': 2.0,
-        'mood': 1.5,
-        'energy': 1.0,
-        'acousticness': 0.8,
-        'tempo': 0.7,
-        'valence': 0.5
-    }
+    # WITH mood (current)
+    recommendations_with = recommend_songs(user_prefs, songs, k=3)
 
-    # Alternative 1: Lower genre emphasis
-    alt1_weights = {
-        'genre': 1.0,
-        'mood': 1.5,
-        'energy': 1.2,
-        'acousticness': 1.0,
-        'tempo': 0.8,
-        'valence': 0.6
-    }
+    # WITHOUT mood (experiment)
+    scored_without = [(song, score_song_no_mood(user_prefs, song))
+                      for song in songs]
+    scored_without.sort(key=lambda x: x[1][0], reverse=True)
+    recommendations_without = scored_without[:3]
 
-    # Alternative 2: Emphasize continuous attributes
-    alt2_weights = {
-        'genre': 1.5,
-        'mood': 1.0,
-        'energy': 1.5,
-        'acousticness': 1.2,
-        'tempo': 1.0,
-        'valence': 0.8
-    }
+    print("WITH MOOD MATCHING (Current):")
+    for i, (song, score, reasons) in enumerate(recommendations_with, 1):
+        print(f"{i}. {song['title']} ({song['genre']}/{song['mood']}) - {score:.2f}")
 
-    for label, weights in [("CURRENT (Genre=2.0)", current_weights),
-                           ("ALT1 (Genre=1.0)", alt1_weights),
-                           ("ALT2 (Energy=1.5)", alt2_weights)]:
-        print(f"{label}")
-        print("-" * 50)
-        scored = [(song, score_song_alt(user_prefs, song, weights))
-                  for song in songs]
-        scored.sort(key=lambda x: x[1][0], reverse=True)
+    print("\nWITHOUT MOOD MATCHING (Experiment):")
+    for i, (song, (score, reasons)) in enumerate(recommendations_without, 1):
+        print(f"{i}. {song['title']} ({song['genre']}/{song['mood']}) - {score:.2f}")
 
-        for i, (song, (score, reasons)) in enumerate(scored[:3], 1):
-            print(f"{i}. {song['title']} ({song['genre']}/{song['mood']}) - {score:.2f}")
-        print()
+    # Identify differences
+    with_titles = {rec[0]['id'] for rec in recommendations_with}
+    without_titles = {rec[0]['id'] for rec in recommendations_without}
+
+    if with_titles == without_titles:
+        print("\n[OK] NO CHANGE - Top 3 remain the same")
+    else:
+        print(f"\n[CHANGED] RANKINGS DIFFERENT - {len(with_titles - without_titles)} song(s) replaced")
+    print()
 
 
 def main() -> None:
@@ -135,7 +119,7 @@ def main() -> None:
     print_recommendations("Melancholic Jazz", profile4, songs)
 
     # Weight comparison for Jazz profile
-    print_weight_comparison("Melancholic Jazz (weight investigation)", profile4, songs)
+    print_feature_removal_experiment("Melancholic Jazz (mood removal test)", profile4, songs)
 
 
 if __name__ == "__main__":

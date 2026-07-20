@@ -157,9 +157,31 @@ TOP 5 RECOMMENDATIONS:
 
 ## Experiments You Tried
 
-**Stress Test: Four Diverse User Profiles**
+**Experiment 1: Weight Investigation**
 
-The recommender was tested with 4 distinct user preference profiles to evaluate performance across different musical tastes:
+(Documented above in Algorithm Recipe section)
+
+**Experiment 2: Feature Removal - Does Mood Matter?**
+
+We tested removing the mood matching feature to understand its importance to the system.
+
+Test Case: Melancholic Jazz User Profile
+
+```
+WITH MOOD MATCHING (Current):
+1. Desert Blues (blues/melancholic) - 4.93
+2. Coffee Shop Stories (jazz/relaxed) - 4.76
+3. Indie Dreaming (indie/melancholic) - 3.44
+
+WITHOUT MOOD MATCHING (Experiment):
+1. Coffee Shop Stories (jazz/relaxed) - 4.76
+2. Desert Blues (blues/melancholic) - 3.93 (-1.0 from removed mood bonus)
+3. Focus Flow (lofi/focused) - 3.22
+```
+
+**Finding**: Removing mood caused MAJOR ranking shifts. Desert Blues dropped from #1 (4.93) to #2 (3.93), losing 1.0 points. Coffee Shop Stories rose to #1 on genre match alone, despite having "relaxed" mood instead of "melancholic." 
+
+**Conclusion**: Mood matching is CRITICAL to recommendations. Without it, the system prioritizes genre over emotional/contextual fit. The +1.0 mood bonus is essential for cross-genre discovery.
 
 ### Profile 1: Chill Lofi
 ```
