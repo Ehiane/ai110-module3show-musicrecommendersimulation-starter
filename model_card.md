@@ -61,9 +61,35 @@ The system works well for users whose preferences align with well-represented mo
 
 ## 7. Evaluation  
 
-We tested four diverse user profiles: Chill Lofi (well-represented), High-Energy Pop (well-represented), Deep Intense Rock (single song bottleneck), and Melancholic Jazz (single song bottleneck). The system performed well for lofi/pop users but failed gracefully for rock/jazz users by returning the single available song. 
+**Profiles Tested:**
+1. Chill Lofi (genre=lofi, mood=chill, energy=0.40, acousticness=0.75) — well-represented in data
+2. High-Energy Pop (genre=pop, mood=happy, energy=0.85, acousticness=0.20) — well-represented in data
+3. Deep Intense Rock (genre=rock, mood=intense, energy=0.90, acousticness=0.10) — rock: 1 song only
+4. Melancholic Jazz (genre=jazz, mood=melancholic, energy=0.45, acousticness=0.85) — jazz: 1 song only
 
-We ran two experiments: (1) Weight investigation showing genre=2.0 caused echo chambers, justifying reduction to 1.5, and (2) Feature removal showing mood matching is critical—removing it flipped rankings back to pure genre sorting. Surprising finding: even at weight 1.5, genre still dominates for users with underrepresented preferences.
+**Surprising Findings:**
+
+The most striking surprise was how differently the system behaves based on dataset representation. Well-represented users (lofi, pop) received diverse top-5 recommendations with clear reasoning. Underrepresented users (rock, jazz) hit hard walls—Jazz user's #1 recommendation was the only jazz song available, forcing a compromise: they got coffee shop stories (jazz/relaxed) instead of matching mood.
+
+**Profile Comparison 1: Chill Lofi vs High-Energy Pop**
+
+Both profiles are well-represented (3 lofi songs, 2 pop songs) and both ranked their target genre first. However, the energy preference created a clear split: Chill Lofi received low-energy songs (0.35-0.42 energy range), while High-Energy Pop received high-energy songs (0.76-0.93 energy). This makes perfect sense—the system correctly identified that "chill" mood requires relaxing music while "happy" mood pairs with energetic tracks. The continuous energy attribute worked as designed to differentiate within genres.
+
+**Profile Comparison 2: High-Energy Pop vs Deep Intense Rock**
+
+Both users want high energy (0.85 vs 0.90) and low acousticness (0.20 vs 0.10), suggesting they prefer processed, synthesized sounds. However, their outputs diverged completely. Pop user got 5 diverse songs; Rock user got 1 rock song (Storm Runner) then fell back to pop/hip-hop songs. This reveals the dataset imbalance: only 1 rock song exists, so even with matching preferences, rock users cannot escape their genre island. Pop user never encounters this problem because pop has 2 songs minimum.
+
+**Profile Comparison 3: Chill Lofi vs Melancholic Jazz**
+
+Both target low-to-moderate energy (0.40 vs 0.45) and high acousticness (0.75 vs 0.85), but different moods: chill vs melancholic. The rankings flipped: Chill user got "Midnight Coding" (lofi/chill) at top because mood matched perfectly. Jazz user got "Desert Blues" (blues/melancholic) at top because mood matched, not genre. This demonstrates that the mood feature enables cross-genre discovery—Jazz user found a non-jazz song that better matched their emotional preference. Without mood matching, this would not happen.
+
+**What Surprised Us:**
+
+The feature removal experiment proved that mood is load-bearing. Removing the +1.0 mood bonus caused Desert Blues to drop from 4.93 to 3.93 points, losing ranking to a genre-matched song with wrong mood. This showed that without mood, recommendations collapse into pure genre sorting—exactly the echo chamber we were trying to avoid.
+
+**Simple Test Results:**
+
+We ran two systematic experiments: (1) Weight investigation comparing original (Genre=2.0) vs refined (Genre=1.5) showed that lowering genre weight enabled better mood/energy matching without sacrificing satisfaction for well-represented users. (2) Feature removal (no mood) on Jazz profile showed 100% ranking change—proving mood is essential for system behavior.
 
 ---
 
