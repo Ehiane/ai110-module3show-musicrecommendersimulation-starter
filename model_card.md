@@ -1,107 +1,70 @@
-# 🎧 Model Card: Music Recommender Simulation
+# VibeFinder 1.0 - Model Card
 
-## 1. Model Name  
+## 1. Model Name
 
-**VibeFinder 1.0** — A point-weighted music recommendation system that scores songs based on genre, mood, and audio feature similarity.
-
----
-
-## 2. Intended Use  
-
-VibeFinder generates top-5 personalized song recommendations for users based on their favorite genre, mood preference, and target audio characteristics (energy, valence, tempo, acousticness). It is designed for classroom exploration of recommender system biases and design tradeoffs, not production use. The system assumes users have a clear primary genre preference and can articulate their mood and energy targets.
+**VibeFinder 1.0** — A point-weighted music recommender that finds personalized song suggestions based on user genre, mood, and audio preferences.
 
 ---
 
-## 3. How the Model Works  
+## 2. Goal / Task
 
-VibeFinder scores each song by comparing it to the user's preferences using a point-weighting algorithm:
-- **Genre Match** (+1.5): Exact match to favorite genre
-- **Mood Match** (+1.0): Exact match to favorite mood
-- **Continuous Attributes** (+1.5-0.8): Distance-based scores for energy, acousticness, tempo, and valence
-- Songs are ranked by total score and top 5 are returned with explanations
-
-The system started with genre weight +2.0 but was reduced to +1.5 after experiments showed it created echo chambers. The mood feature proved critical—removing it caused recommendations to collapse into pure genre sorting.
+VibeFinder recommends the top 5 songs a user will likely enjoy based on their favorite genre, mood, and target audio characteristics (energy, valence, tempo, acousticness). It tries to balance what users explicitly prefer (genre/mood) with how songs actually sound (continuous audio features).
 
 ---
 
-## 4. Data  
+## 3. Data Used
 
-The dataset contains 18 songs across 15 genres with 10 moods represented. Each song includes: title, artist, genre, mood, energy (0-1), tempo_bpm, valence (0-1), danceability (0-1), and acousticness (0-1). 
+**Dataset:** 18 songs across 15 genres with 10 different moods. Each song has: title, artist, genre, mood, energy (0-1), tempo (bpm), valence (0-1), danceability (0-1), acousticness (0-1).
 
-**Data characteristics:**
-- Total songs: 18
-- Unique genres: 15 (13 genres have only 1 song)
-- Dominant mood: "intense" (22%), followed by "happy"/"chill" (16.7% each)
-- Energy range: 0.25-0.95 (avg 0.62)
-- Acousticness range: 0.05-0.95 (avg 0.49)
-
-No songs were added or removed from the provided dataset. The data represents an imbalanced, Western-centric catalog with heavy representation of electronic/pop and under-representation of world music genres.
+**Key limitations:** 13 out of 15 genres have only 1 song each. "Intense" mood is 22% of data while "peaceful" is 5.6%. Dataset is Western music-focused with no world music or non-English vocals. Only 27.8% of songs fall in mid-energy range (0.4-0.6).
 
 ---
 
-## 5. Strengths  
+## 4. Algorithm Summary
 
-The system works well for users whose preferences align with well-represented moods (intense, happy, chill) and has moderate genre diversity (lofi, pop, rock genres). The point-weighting approach successfully balances categorical preferences (genre/mood) with continuous audio features. Recommendations are interpretable—each suggestion includes a breakdown of why it scored well. The refined weights enable cross-genre discovery (e.g., blues songs for melancholic mood despite not being the favorite genre).
+VibeFinder scores each song by comparing it to the user's preferences:
+- **Genre match** gets +1.5 points if it matches favorite genre
+- **Mood match** gets +1.0 points if it matches favorite mood  
+- **Audio attributes** (energy, acousticness, tempo, valence) each get partial credit based on how close they are to target values—each can earn up to 0.8-1.5 points depending on attribute
 
----
-
-## 6. Limitations and Bias 
-
-**Critical Filter Bubble: 13 out of 15 genres have only 1 song each.** Users who prefer rock, jazz, metal, or classical music are locked into single-song recommendations despite genre weight being reduced to +1.5. Once they get one recommendation from their genre, there are no alternatives. This violates basic recommender diversity principles.
-
-**Mood Imbalance:** "Intense" mood represents 22% of the dataset while peaceful, relaxed, and energetic moods have only 5.6% each. Users seeking peaceful music are severely disadvantaged with limited recommendations. The exact-match mood system cannot find semantically similar alternatives (e.g., "peaceful" user cannot get "relaxed" song substitutes).
-
-**Energy Clustering Gap:** Only 27.8% of songs fall in the mid-energy range (0.4-0.6). Users targeting moderate energy face algorithmic disadvantage—they have fewer songs to match against, resulting in lower scores and less diverse recommendations. Extreme energy preferences (very low/high) have better catalog coverage.
-
-**Cold Start Problem:** New users without a history cannot be scored on liked_songs similarity. They can only be matched on explicit preferences, limiting recommendation quality until they rate multiple songs.
-
-**Acoustic Preference Blindness:** The system ignores user's acousticness preference during exact mood matching. A user wanting "chill + acoustic" might get an electronic "chill" song with 0.05 acousticness just because it has the mood match.
+All scores are added together. Songs with highest total scores rank first, and the top 5 are returned with explanations of why they scored well.
 
 ---
 
-## 7. Evaluation  
+## 5. Observed Behavior / Biases
 
-**Profiles Tested:**
-1. Chill Lofi (genre=lofi, mood=chill, energy=0.40, acousticness=0.75) — well-represented in data
-2. High-Energy Pop (genre=pop, mood=happy, energy=0.85, acousticness=0.20) — well-represented in data
-3. Deep Intense Rock (genre=rock, mood=intense, energy=0.90, acousticness=0.10) — rock: 1 song only
-4. Melancholic Jazz (genre=jazz, mood=melancholic, energy=0.45, acousticness=0.85) — jazz: 1 song only
+**Critical filter bubble:** Users who prefer rock, jazz, metal, or classical music get locked into a single song because each genre has only 1 song in the catalog. No matter what their other preferences are, they'll keep getting that same song in top recommendations.
 
-**Surprising Findings:**
+**Mood imbalance:** The system uses exact mood matching (chill must match chill exactly). A user wanting "peaceful" music cannot get a "relaxed" song as alternative, even though they're emotionally similar. Users seeking underrepresented moods like "peaceful" (5.6% of data) have far fewer good matches than users wanting "intense" (22%).
 
-The most striking surprise was how differently the system behaves based on dataset representation. Well-represented users (lofi, pop) received diverse top-5 recommendations with clear reasoning. Underrepresented users (rock, jazz) hit hard walls—Jazz user's #1 recommendation was the only jazz song available, forcing a compromise: they got coffee shop stories (jazz/relaxed) instead of matching mood.
-
-**Profile Comparison 1: Chill Lofi vs High-Energy Pop**
-
-Both profiles are well-represented (3 lofi songs, 2 pop songs) and both ranked their target genre first. However, the energy preference created a clear split: Chill Lofi received low-energy songs (0.35-0.42 energy range), while High-Energy Pop received high-energy songs (0.76-0.93 energy). This makes perfect sense—the system correctly identified that "chill" mood requires relaxing music while "happy" mood pairs with energetic tracks. The continuous energy attribute worked as designed to differentiate within genres.
-
-**Profile Comparison 2: High-Energy Pop vs Deep Intense Rock**
-
-Both users want high energy (0.85 vs 0.90) and low acousticness (0.20 vs 0.10), suggesting they prefer processed, synthesized sounds. However, their outputs diverged completely. Pop user got 5 diverse songs; Rock user got 1 rock song (Storm Runner) then fell back to pop/hip-hop songs. This reveals the dataset imbalance: only 1 rock song exists, so even with matching preferences, rock users cannot escape their genre island. Pop user never encounters this problem because pop has 2 songs minimum.
-
-**Profile Comparison 3: Chill Lofi vs Melancholic Jazz**
-
-Both target low-to-moderate energy (0.40 vs 0.45) and high acousticness (0.75 vs 0.85), but different moods: chill vs melancholic. The rankings flipped: Chill user got "Midnight Coding" (lofi/chill) at top because mood matched perfectly. Jazz user got "Desert Blues" (blues/melancholic) at top because mood matched, not genre. This demonstrates that the mood feature enables cross-genre discovery—Jazz user found a non-jazz song that better matched their emotional preference. Without mood matching, this would not happen.
-
-**What Surprised Us:**
-
-The feature removal experiment proved that mood is load-bearing. Removing the +1.0 mood bonus caused Desert Blues to drop from 4.93 to 3.93 points, losing ranking to a genre-matched song with wrong mood. This showed that without mood, recommendations collapse into pure genre sorting—exactly the echo chamber we were trying to avoid.
-
-**Simple Test Results:**
-
-We ran two systematic experiments: (1) Weight investigation comparing original (Genre=2.0) vs refined (Genre=1.5) showed that lowering genre weight enabled better mood/energy matching without sacrificing satisfaction for well-represented users. (2) Feature removal (no mood) on Jazz profile showed 100% ranking change—proving mood is essential for system behavior.
+**Energy clustering:** Users wanting mid-range energy (0.4-0.6) are disadvantaged because only 27.8% of songs fall in this range. Extreme energy preferences (very high or very low) have better catalog coverage.
 
 ---
 
-## 8. Future Work  
+## 6. Evaluation Process
 
-(1) **Genre Expansion:** Add 3-5 songs per genre to eliminate single-song filter bubbles.  
-(2) **Fuzzy Mood Matching:** Replace exact mood matching with semantic similarity (e.g., "peaceful" ≈ "relaxed").  
-(3) **Collaborative Filtering:** Use user-user similarity to handle cold start and discover cross-genre tastes.  
-(4) **Hybrid Scoring:** Combine audio features with collaborative signals for better diversity.
+We tested 4 different user profiles:
+- **Chill Lofi:** Well-represented, got diverse lofi recommendations ranking low-energy songs correctly
+- **High-Energy Pop:** Well-represented, got diverse pop recommendations with high-energy songs
+- **Deep Intense Rock:** Only 1 rock song exists, got stuck recommending the same song multiple times
+- **Melancholic Jazz:** Only 1 jazz song exists, but mood matching allowed cross-genre discovery (blues song ranked higher than jazz song because mood matched better)
+
+We ran two experiments: (1) tested whether lowering genre weight from 2.0 to 1.5 would reduce echo chambers (it did), and (2) tested what happens if we remove mood matching entirely (recommendations collapsed back to pure genre sorting). The mood experiment revealed that mood is load-bearing—it's the feature that enables cross-genre discovery.
 
 ---
 
-## 9. Personal Reflection  
+## 7. Intended Use and Non-Intended Use
 
-Building this recommender revealed that data quality matters as much as algorithm design. Even with refined weights, a 13:1 genre imbalance creates hard walls that no weighting scheme can overcome. I learned that "fairness" in recommendations isn't about treating all users equally—it's about having enough representation for all user preferences in the data. The experiments showed that features (like mood) that seem minor can be essential for system behavior. The most surprising finding was how much the mood feature enables serendipity—without it, the system becomes a genre filter, not a recommender. This experience changed how I evaluate real-world recommenders like Spotify: I now notice dataset representation issues and think critically about which features drive recommendations.
+**Intended use:** Classroom exploration of recommender system tradeoffs and bias. Testing recommendations for users who have clear genre and mood preferences. Understanding how data imbalance affects recommendations.
+
+**NOT intended for:** Production music streaming (too small dataset). Users without clear genre preference. Real-world deployment without significant data expansion. Users who want diverse cross-genre exploration (the system prioritizes genre too heavily). Users seeking recommendations based on artist history or social graphs.
+
+---
+
+## 8. Ideas for Improvement
+
+1. **Expand dataset:** Add 3-5 more songs per genre to eliminate single-song filter bubbles. Every genre should have at least 3 options.
+
+2. **Fuzzy mood matching:** Replace exact mood matching with semantic similarity (e.g., treat "peaceful" and "relaxed" as similar). Add computational cost but enables better substitutes.
+
+3. **Add collaborative filtering:** Track what songs users actually like and recommend based on user-user similarity. Solves cold-start problem and discovers cross-genre patterns real users enjoy together.
