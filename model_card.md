@@ -68,3 +68,16 @@ We ran two experiments: (1) tested whether lowering genre weight from 2.0 to 1.5
 2. **Fuzzy mood matching:** Replace exact mood matching with semantic similarity (e.g., treat "peaceful" and "relaxed" as similar). Add computational cost but enables better substitutes.
 
 3. **Add collaborative filtering:** Track what songs users actually like and recommend based on user-user similarity. Solves cold-start problem and discovers cross-genre patterns real users enjoy together.
+
+---
+
+## Personal Reflection
+
+**Biggest Learning Moment:** Realizing that data quality matters more than algorithm sophistication. I spent hours tuning weights (2.0 → 1.5 → testing alternatives), expecting algorithmic tweaks to solve problems. Then I analyzed the dataset and discovered 13 out of 15 genres have only 1 song. No weight adjustment could overcome that structural limitation. This fundamentally changed how I think about system design—you can't algorithm your way out of bad data. Real recommenders (Spotify, Netflix) succeed because they have massive, diverse catalogs, not because their formulas are magical.
+
+**How AI Tools Helped (and When I Double-Checked):** AI was invaluable for generating test profiles, writing efficient data analysis scripts, and explaining complex concepts. I used it to draft the model card sections and it saved hours of documentation work. However, I had to double-check the mathematical correctness of the scoring function—I verified that the distance-based scoring formula (1 - |difference| / max_range) actually produces the intended 0-to-max point range. I also manually validated that removing mood matching actually changed rankings (not just talked about it theoretically). AI excels at generation and explanation, but mathematical/logical correctness needs human verification.
+
+**What Surprised Me About Simple Algorithms:** The point-weighting system is genuinely simple—just add up numbers—yet it *feels* like real recommendations. Users can understand why each song scored well by reading the reasons breakdown. This surprised me because I expected recommendations to require complex machine learning. Instead, transparency and interpretability matter more than sophistication. The feature removal experiment particularly highlighted this: removing one +1.0 bonus completely flipped the recommendations, showing that even tiny features have outsized impact on user experience.
+
+**What I'd Try Next:** If extending this project, I'd first fix the data (add 3+ songs per genre, balance mood distribution). Then I'd add collaborative filtering to learn which songs users actually like together—maybe jazz users also love blues, or intense rock fans love metal. I'd also implement fuzzy mood matching so "peaceful" and "relaxed" are treated as similar. Finally, I'd build a simple user interface to collect explicit feedback ("Was this recommendation good?") and use that signal to retrain weights in real-time. The current system is entirely preference-based; adding behavioral data would be the next frontier.
+
