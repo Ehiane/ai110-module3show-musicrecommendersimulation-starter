@@ -11,6 +11,18 @@
 **What task did you give the agent?**
 
 <!-- Describe the goal you asked the agent to accomplish -->
+1.
+ ```
+Hey claude, I'm getting started on this project that's a music reccomendation simulation. 
+
+Out of curiosity how do major music streaming platforms like Spotify, youtube music, apple music predict what users will love next?
+
+In your attempt in doing so, focus on how collaborative filtering and content-based filtering apply in the logic
+```
+2.
+```
+what are the main data types involved in these systems, do likes, skips, playlists, tempo, or mood play a factor ?
+```
 
 **Prompts used:**
 
