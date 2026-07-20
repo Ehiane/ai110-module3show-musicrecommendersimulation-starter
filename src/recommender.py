@@ -75,37 +75,73 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
     score = 0.0
     reasons = []
 
-    # Genre match: +2.0
+    # Genre match: +1.5 (reduced from 2.0 to allow cross-genre discovery)
     if song['genre'] == user_prefs['favorite_genre']:
-        score += 2.0
+        score += 1.5
         reasons.append(f"[Genre] {song['genre']}")
 
-    # Mood match: +1.5
+    # Mood match: +1.0 (reduced from 1.5 to balance with continuous attributes)
     if song['mood'] == user_prefs['favorite_mood']:
-        score += 1.5
+        score += 1.0
         reasons.append(f"[Mood] {song['mood']}")
 
-    # Energy similarity: +1.0 max (based on distance from target)
+    # Energy similarity: +1.5 max (increased from 1.0 for better musical matching)
     energy_diff = abs(song['energy'] - user_prefs['target_energy'])
-    energy_score = max(0, 1.0 * (1 - energy_diff / 0.4))
+    energy_score = max(0, 1.5 * (1 - energy_diff / 0.4))
     score += energy_score
     reasons.append(f"Energy match: {energy_score:.2f}")
 
-    # Acousticness similarity: +0.8 max
+    # Acousticness similarity: +1.2 max (increased from 0.8)
     acousticness_diff = abs(song['acousticness'] - user_prefs['target_acousticness'])
-    acousticness_score = max(0, 0.8 * (1 - acousticness_diff / 0.25))
+    acousticness_score = max(0, 1.2 * (1 - acousticness_diff / 0.25))
     score += acousticness_score
     reasons.append(f"Acousticness: {acousticness_score:.2f}")
 
-    # Tempo similarity: +0.7 max
+    # Tempo similarity: +1.0 max (increased from 0.7)
     tempo_diff = abs(song['tempo_bpm'] - user_prefs['target_tempo'])
-    tempo_score = max(0, 0.7 * (1 - tempo_diff / 40))
+    tempo_score = max(0, 1.0 * (1 - tempo_diff / 40))
     score += tempo_score
     reasons.append(f"Tempo match: {tempo_score:.2f}")
 
-    # Valence similarity: +0.5 max
+    # Valence similarity: +0.8 max (increased from 0.5)
     valence_diff = abs(song['valence'] - user_prefs['target_valence'])
-    valence_score = max(0, 0.5 * (1 - valence_diff / 0.4))
+    valence_score = max(0, 0.8 * (1 - valence_diff / 0.4))
+    score += valence_score
+    reasons.append(f"Valence: {valence_score:.2f}")
+
+    return (score, reasons)
+
+
+def score_song_alt(user_prefs: Dict, song: Dict, weights: Dict) -> Tuple[float, List[str]]:
+    """Score a song with custom weights. Used for weight experimentation."""
+    score = 0.0
+    reasons = []
+
+    if song['genre'] == user_prefs['favorite_genre']:
+        score += weights['genre']
+        reasons.append(f"[Genre] {song['genre']}")
+
+    if song['mood'] == user_prefs['favorite_mood']:
+        score += weights['mood']
+        reasons.append(f"[Mood] {song['mood']}")
+
+    energy_diff = abs(song['energy'] - user_prefs['target_energy'])
+    energy_score = max(0, weights['energy'] * (1 - energy_diff / 0.4))
+    score += energy_score
+    reasons.append(f"Energy: {energy_score:.2f}")
+
+    acousticness_diff = abs(song['acousticness'] - user_prefs['target_acousticness'])
+    acousticness_score = max(0, weights['acousticness'] * (1 - acousticness_diff / 0.25))
+    score += acousticness_score
+    reasons.append(f"Acoustic: {acousticness_score:.2f}")
+
+    tempo_diff = abs(song['tempo_bpm'] - user_prefs['target_tempo'])
+    tempo_score = max(0, weights['tempo'] * (1 - tempo_diff / 40))
+    score += tempo_score
+    reasons.append(f"Tempo: {tempo_score:.2f}")
+
+    valence_diff = abs(song['valence'] - user_prefs['target_valence'])
+    valence_score = max(0, weights['valence'] * (1 - valence_diff / 0.4))
     score += valence_score
     reasons.append(f"Valence: {valence_score:.2f}")
 
